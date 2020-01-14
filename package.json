@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "gulp dev:extension",
+    "server": "node development/server.js",
     "dist": "gulp dist",
     "doc": "jsdoc -c development/.jsdoc.json",
     "publish-docs": "gh-pages -d docs/jsdocs",
@@ -176,6 +177,7 @@
     "rpc-cap": "^1.0.1",
     "safe-event-emitter": "^1.0.1",
     "safe-json-stringify": "^1.2.0",
+    "serialize-javascript": "^2.1.2",
     "single-call-balance-checker-abi": "^1.0.0",
     "string.prototype.matchall": "^3.0.1",
     "swappable-obj-proxy": "^1.1.0",
@@ -273,6 +275,7 @@
     "mocha-sinon": "^2.0.0",
     "nock": "^9.0.14",
     "node-sass": "^4.12.0",
+    "node-static": "^0.7.11",
     "nyc": "^13.0.0",
     "path": "^0.12.7",
     "proxyquire": "2.0.1",

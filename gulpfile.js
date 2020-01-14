@@ -50,10 +50,7 @@ function gulpParallel (...args) {
 }
 
 const browserPlatforms = [
-  'firefox',
-  'chrome',
-  'brave',
-  'opera',
+  'frontend',
 ]
 const commonPlatforms = [
   // browser extensions
@@ -109,14 +106,6 @@ createCopyTasks('html', {
   destinations: commonPlatforms.map(platform => `./dist/${platform}`),
 })
 
-// copy extension
-
-createCopyTasks('manifest', {
-  source: './app/',
-  pattern: '/*.json',
-  destinations: browserPlatforms.map(platform => `./dist/${platform}`),
-})
-
 function createCopyTasks (label, opts) {
   if (!opts.devOnly) {
     const copyTaskName = `copy:${label}`
@@ -159,107 +148,9 @@ function copyTask (taskName, opts) {
   }
 }
 
-// manifest tinkering
-
-gulp.task('manifest:chrome', function () {
-  return gulp.src('./dist/chrome/manifest.json')
-    .pipe(jsoneditor(function (json) {
-      delete json.applications
-      json.minimum_chrome_version = '58'
-      return json
-    }))
-    .pipe(gulp.dest('./dist/chrome', { overwrite: true }))
-})
-
-gulp.task('manifest:opera', function () {
-  return gulp.src('./dist/opera/manifest.json')
-    .pipe(jsoneditor(function (json) {
-      json.permissions = [
-        'storage',
-        'tabs',
-        'clipboardWrite',
-        'clipboardRead',
-        'http://localhost:8545/',
-      ]
-      return json
-    }))
-    .pipe(gulp.dest('./dist/opera', { overwrite: true }))
-})
-
-gulp.task('manifest:production', function () {
-  return gulp.src([
-    './dist/firefox/manifest.json',
-    './dist/chrome/manifest.json',
-    './dist/brave/manifest.json',
-    './dist/opera/manifest.json',
-  ], { base: './dist/' })
-
-  // Exclude chromereload script in production:
-    .pipe(jsoneditor(function (json) {
-      json.background.scripts = json.background.scripts.filter((script) => {
-        return !script.includes('chromereload')
-      })
-      return json
-    }))
-
-    .pipe(gulp.dest('./dist/', { overwrite: true }))
-})
-
-gulp.task('manifest:testing', function () {
-  return gulp.src([
-    './dist/firefox/manifest.json',
-    './dist/chrome/manifest.json',
-  ], { base: './dist/' })
-
-  // Exclude chromereload script in production:
-    .pipe(jsoneditor(function (json) {
-      json.permissions = [...json.permissions, 'webRequestBlocking', 'http://localhost/*']
-      return json
-    }))
-
-    .pipe(gulp.dest('./dist/', { overwrite: true }))
-})
-
 const scriptsToExcludeFromBackgroundDevBuild = {
   'bg-libs.js': true,
 }
-
-gulp.task('manifest:testing-local', function () {
-  return gulp.src([
-    './dist/firefox/manifest.json',
-    './dist/chrome/manifest.json',
-  ], { base: './dist/' })
-
-    .pipe(jsoneditor(function (json) {
-      json.background = {
-        ...json.background,
-        scripts: json.background.scripts.filter(scriptName => !scriptsToExcludeFromBackgroundDevBuild[scriptName]),
-      }
-      json.permissions = [...json.permissions, 'webRequestBlocking', 'http://localhost/*']
-      return json
-    }))
-
-    .pipe(gulp.dest('./dist/', { overwrite: true }))
-})
-
-
-gulp.task('manifest:dev', function () {
-  return gulp.src([
-    './dist/firefox/manifest.json',
-    './dist/chrome/manifest.json',
-  ], { base: './dist/' })
-
-    .pipe(jsoneditor(function (json) {
-      json.background = {
-        ...json.background,
-        scripts: json.background.scripts.filter(scriptName => !scriptsToExcludeFromBackgroundDevBuild[scriptName]),
-      }
-      json.permissions = [...json.permissions, 'webRequestBlocking']
-      return json
-    }))
-
-    .pipe(gulp.dest('./dist/', { overwrite: true }))
-})
 
 gulp.task('optimize:images', function () {
   return gulp.src('./dist/**/images/**', { base: './dist/' })
@@ -269,28 +160,19 @@ gulp.task('optimize:images', function () {
 
 gulp.task('copy',
   gulp.series(
-    gulp.parallel(...copyTaskNames),
-    'manifest:production',
-    'manifest:chrome',
-    'manifest:opera'
+    gulp.parallel(...copyTaskNames)
   )
 )
 
 gulp.task('dev:copy',
   gulp.series(
-    gulp.parallel(...copyDevTaskNames),
-    'manifest:dev',
-    'manifest:chrome',
-    'manifest:opera'
+    gulp.parallel(...copyDevTaskNames)
   )
 )
 
 gulp.task('test:copy',
   gulp.series(
-    gulp.parallel(...copyDevTaskNames),
-    'manifest:chrome',
-    'manifest:opera',
-    'manifest:testing-local'
+    gulp.parallel(...copyDevTaskNames)
   )
 )
 
@@ -371,9 +253,9 @@ const buildJsFiles = [
 createTasksForBuildJsDeps({ filename: 'bg-libs', key: 'background' })
 createTasksForBuildJsDeps({ filename: 'ui-libs', key: 'ui' })
 createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:extension:js', devMode: true })
-createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:test-extension:js', devMode: true, testing: 'true' })
-createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:extension:js' })
-createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:test:extension:js', testing: 'true' })
+// createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:test-extension:js', devMode: true, testing: 'true' })
+// createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:extension:js' })
+// createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:test:extension:js', testing: 'true' })
 
 function createTasksForBuildJsDeps ({ key, filename }) {
   const destinations = browserPlatforms.map(platform => `./dist/${platform}`)
@@ -443,24 +325,24 @@ gulp.task('clean', function clean () {
 })
 
 // zip tasks for distribution
-gulp.task('zip:chrome', zipTask('chrome'))
-gulp.task('zip:firefox', zipTask('firefox'))
-gulp.task('zip:opera', zipTask('opera'))
-gulp.task('zip', gulp.parallel('zip:chrome', 'zip:firefox', 'zip:opera'))
+// gulp.task('zip:chrome', zipTask('chrome'))
+// gulp.task('zip:firefox', zipTask('firefox'))
+// gulp.task('zip:opera', zipTask('opera'))
+// gulp.task('zip', gulp.parallel('zip:chrome', 'zip:firefox', 'zip:opera'))
 
 // high level tasks
 
-gulp.task('dev:test',
-  gulp.series(
-    'clean',
-    'dev:scss',
-    gulp.parallel(
-      'dev:test-extension:js',
-      'test:copy',
-      'dev:reload'
-    )
-  )
-)
+// gulp.task('dev:test',
+//   gulp.series(
+//     'clean',
+//     'dev:scss',
+//     gulp.parallel(
+//       'dev:test-extension:js',
+//       'test:copy',
+//       'dev:reload'
+//     )
+//   )
+// )
 
 gulp.task('dev:extension',
   gulp.series(
@@ -474,50 +356,49 @@ gulp.task('dev:extension',
   )
 )
 
-gulp.task('build',
-  gulp.series(
-    'clean',
-    'build:scss',
-    gulpParallel(
-      'build:extension:js:deps:background',
-      'build:extension:js:deps:ui',
-      'build:extension:js',
-      'copy'
-    ),
-    'optimize:images'
-  )
-)
+// gulp.task('build',
+//   gulp.series(
+//     'clean',
+//     'build:scss',
+//     gulpParallel(
+//       'build:extension:js:deps:background',
+//       'build:extension:js:deps:ui',
+//       'build:extension:js',
+//       'copy'
+//     ),
+//     'optimize:images'
+//   )
+// )
 
-gulp.task('build:test',
-  gulp.series(
-    'clean',
-    'build:scss',
-    gulpParallel(
-      'build:extension:js:deps:background',
-      'build:extension:js:deps:ui',
-      'build:test:extension:js',
-      'copy'
-    ),
-    'manifest:testing'
-  )
-)
+// gulp.task('build:test',
+//   gulp.series(
+//     'clean',
+//     'build:scss',
+//     gulpParallel(
+//       'build:extension:js:deps:background',
+//       'build:extension:js:deps:ui',
+//       'build:test:extension:js',
+//       'copy'
+//     )
+//   )
+// )
 
-gulp.task('dist',
-  gulp.series(
-    'build',
-    'zip'
-  )
-)
+// gulp.task('dist',
+//   gulp.series(
+//     'build',
+//     'zip'
+//   )
+// )
 
 // task generators
 
-function zipTask (target) {
-  return () => {
-    return gulp.src(`dist/${target}/**`)
-      .pipe(zip(`metamask-${target}-${manifest.version}.zip`))
-      .pipe(gulp.dest('builds'))
-  }
-}
+// function zipTask (target) {
+//   return () => {
+//     return gulp.src(`dist/${target}/**`)
+//       .pipe(zip(`metamask-${target}-${manifest.version}.zip`))
+//       .pipe(gulp.dest('builds'))
+//   }
+// }
 
 function generateBundler (opts, performBundle) {
   const browserifyOpts = assign({}, watchify.args, {
