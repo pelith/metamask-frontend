@@ -23,7 +23,7 @@ class ExtensionPlatform {
   }
 
   getVersion () {
-    return extension.runtime.getManifest().version
+    return '0.0.0'
   }
 
   openExtensionInBrowser (route = null, queryString = null) {
