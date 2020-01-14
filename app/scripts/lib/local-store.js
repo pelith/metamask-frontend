@@ -1,16 +1,19 @@
-import extension from 'extensionizer'
+import serialize from 'serialize-javascript'
 import log from 'loglevel'
-import { checkForError } from './util'
+
+function deserialize(serializedJavascript){
+  return eval('(' + serializedJavascript + ')');
+}
 
 /**
- * A wrapper around the extension's storage local API
+ * A wrapper around the browser's storage local API
  */
-export default class ExtensionStore {
+export default class BrowserStore {
   /**
    * @constructor
    */
   constructor () {
-    this.isSupported = !!(extension.storage.local)
+    this.isSupported = !!(window.localStorage)
     if (!this.isSupported) {
       log.error('Storage local API not available.')
     }
@@ -20,66 +23,26 @@ export default class ExtensionStore {
    * Returns all of the keys currently saved
    * @returns {Promise<*>}
    */
-  async get () {
+  get () {
     if (!this.isSupported) {
       return undefined
     }
-    const result = await this._get()
+    const result = window.localStorage.getItem('state') || {}
     // extension.storage.local always returns an obj
     // if the object is empty, treat it as undefined
     if (isEmpty(result)) {
       return undefined
     } else {
-      return result
+      return deserialize(result)
     }
   }
 
   /**
    * Sets the key in local state
-   * @param {Object} state - The state to set
-   * @returns {Promise<void>}
+   * @param {object} state - The state to set
    */
-  async set (state) {
-    return this._set(state)
-  }
-
-  /**
-   * Returns all of the keys currently saved
-   * @private
-   * @returns {Object} - the key-value map from local storage
-   */
-  _get () {
-    const local = extension.storage.local
-    return new Promise((resolve, reject) => {
-      local.get(null, (/** @type {any} */ result) => {
-        const err = checkForError()
-        if (err) {
-          reject(err)
-        } else {
-          resolve(result)
-        }
-      })
-    })
-  }
-
-  /**
-   * Sets the key in local state
-   * @param {Object} obj - The key to set
-   * @returns {Promise<void>}
-   * @private
-   */
-  _set (obj) {
-    const local = extension.storage.local
-    return new Promise((resolve, reject) => {
-      local.set(obj, () => {
-        const err = checkForError()
-        if (err) {
-          reject(err)
-        } else {
-          resolve()
-        }
-      })
-    })
+  set (state) {
+    window.localStorage.setItem('state', serialize(state))
   }
 }
 
