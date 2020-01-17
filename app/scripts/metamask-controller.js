@@ -1392,10 +1392,7 @@ export default class MetamaskController extends EventEmitter {
     const origin = isInternal
       ? 'metamask'
       : (new URL(sender.url)).hostname
-    let extensionId
-    if (sender.id !== extension.runtime.id) {
-      extensionId = sender.id
-    }
+    let extensionId = sender.id
     let tabId
     if (sender.tab && sender.tab.id) {
       tabId = sender.tab.id

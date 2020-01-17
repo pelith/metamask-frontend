@@ -14,8 +14,10 @@ export default createInfuraClient
 function createInfuraClient ({ network, onRequest }) {
   const infuraMiddleware = mergeMiddleware([
     createRequestHookMiddleware(onRequest),
-    createInfuraMiddleware({ network, maxAttempts: 5, source: 'metamask' }),
+    // temporary remove source, cause it will cause prefligt error
+    createInfuraMiddleware({ network, maxAttempts: 5 }),
   ])
+
   const infuraProvider = providerFromMiddleware(infuraMiddleware)
   const blockTracker = new BlockTracker({ provider: infuraProvider })
 

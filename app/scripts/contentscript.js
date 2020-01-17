@@ -4,13 +4,14 @@ import LocalMessageDuplexStream from 'post-message-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import extension from 'extensionizer'
 import PortStream from 'extension-port-stream'
+import ServiceWorkerManager from './lib/serviceWorker'
 
 // These require calls need to use require to be statically recognized by browserify
 const fs = require('fs')
 const path = require('path')
 
 const inpageContent = fs.readFileSync(path.join(__dirname, '..', '..', 'dist', 'frontend', 'inpage.js')).toString()
-const inpageSuffix = '//# sourceURL=' + extension.runtime.getURL('inpage.js') + '\n'
+const inpageSuffix = '//# sourceURL=inpage.js' + '\n'
 const inpageBundle = inpageContent + inpageSuffix
 
 // Eventually this streaming injection could be replaced with:
@@ -58,12 +59,23 @@ async function start () {
  *
  */
 async function setupStreams () {
+  if (!('serviceWorker' in navigator)) {
+    console.log('getout mdfk')
+    return
+  }
+
+  await navigator.serviceWorker.ready
+
   // the transport-specific streams for communication between inpage and background
   const pageStream = new LocalMessageDuplexStream({
     name: 'contentscript',
     target: 'inpage',
   })
-  const extensionPort = extension.runtime.connect({ name: 'contentscript' })
+
+  // BUG: navigator.serviceWorker wiil be null when ctrl + shift + r
+  const serviceWorkerManager = new ServiceWorkerManager()
+  const extensionPort = serviceWorkerManager.connect('contentscript')
+  // const extensionPort = extension.runtime.connect({ name: 'contentscript' })
   const extensionStream = new PortStream(extensionPort)
 
   // create and connect channel muxers
