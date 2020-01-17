@@ -29,9 +29,7 @@ import launchMetaMaskUi from '../../ui'
 import StreamProvider from 'web3-stream-provider'
 import { setupMultiplex } from './lib/stream-utils.js'
 import log from 'loglevel'
-import ServiceWorkerManager from './lib/serviceWorker'
 import platform from './platforms'
-
 
 start().catch(log.error)
 

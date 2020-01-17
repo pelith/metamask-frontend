@@ -4,6 +4,7 @@ import LocalMessageDuplexStream from 'post-message-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import platform from './platforms'
 
+
 // These require calls need to use require to be statically recognized by browserify
 const fs = require('fs')
 const path = require('path')
@@ -57,6 +58,13 @@ async function start () {
  *
  */
 async function setupStreams () {
+  if (!('serviceWorker' in navigator)) {
+    console.log('getout mdfk')
+    return
+  }
+
+  await navigator.serviceWorker.ready
+
   // the transport-specific streams for communication between inpage and background
   const pageStream = new LocalMessageDuplexStream({
     name: 'contentscript',

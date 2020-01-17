@@ -11,6 +11,7 @@ import BlockTracker from 'eth-block-tracker'
 
 export default createInfuraClient
 
+<<<<<<< HEAD
 function createInfuraClient ({ network }) {
   // temporary remove source, cause it will cause prefligt error
   const infuraMiddleware = createInfuraMiddleware({ network, maxAttempts: 5 })
