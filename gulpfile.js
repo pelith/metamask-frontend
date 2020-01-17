@@ -250,8 +250,8 @@ const buildJsFiles = [
 ]
 
 // bundle tasks
-createTasksForBuildJsDeps({ filename: 'bg-libs', key: 'background' })
-createTasksForBuildJsDeps({ filename: 'ui-libs', key: 'ui' })
+// createTasksForBuildJsDeps({ filename: 'bg-libs', key: 'background' })
+// createTasksForBuildJsDeps({ filename: 'ui-libs', key: 'ui' })
 createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:extension:js', devMode: true })
 // createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:test-extension:js', devMode: true, testing: 'true' })
 // createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:extension:js' })
@@ -429,6 +429,16 @@ function generateBundler (opts, performBundle) {
       browserifyOpts['entries'] = [opts.filepath]
     }
   }
+
+  if (opts.filename === 'background.js') {
+    // service Worker
+    browserifyOpts.insertGlobalVars = {
+      window: function(file, dir) {
+        return 'self'
+      }
+    }
+  }
+
 
   let bundler = browserify(browserifyOpts)
     .transform('babelify')

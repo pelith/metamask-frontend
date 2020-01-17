@@ -2,7 +2,6 @@
  * @file The entry point for the web extension singleton process.
  */
 
-
 // these need to run before anything else
 import './lib/freezeGlobals'
 import setupFetchDebugging from './lib/setupFetchDebugging'
@@ -31,9 +30,11 @@ import MetamaskController from './metamask-controller'
 import rawFirstTimeState from './first-time-state'
 import setupSentry from './lib/setupSentry'
 import reportFailedTxToSentry from './lib/reportFailedTxToSentry'
+// import setupMetamaskMeshMetrics from './lib/setupMetamaskMeshMetrics'
 import getFirstPreferredLangCode from './lib/get-first-preferred-lang-code'
 import getObjStructure from './lib/getObjStructure'
-import setupEnsIpfsResolver from './lib/ens-ipfs/setup'
+// import setupEnsIpfsResolver from './lib/ens-ipfs/setup'
+import ServiceWorkerManager from './lib/serviceWorker'
 
 import {
   ENVIRONMENT_TYPE_POPUP,
@@ -51,8 +52,8 @@ const notificationManager = new NotificationManager()
 global.METAMASK_NOTIFIER = notificationManager
 
 // setup sentry error reporting
-const release = platform.getVersion()
-const sentry = setupSentry({ release })
+// const release = platform.getVersion()
+// const sentry = setupSentry({ release })
 
 let popupIsOpen = false
 let notificationIsOpen = false
@@ -68,6 +69,9 @@ let versionedData
 
 // initialization flow
 initialize().catch(log.error)
+
+// setup metamask mesh testing container
+// const { submitMeshMetricsEntry } = setupMetamaskMeshMetrics()
 
 /**
  * An object representing a transaction, in whatever state it is in.
@@ -181,17 +185,18 @@ async function loadStateFromPersistence () {
   if (versionedData && !versionedData.data) {
     // unable to recover, clear state
     versionedData = migrator.generateInitialState(firstTimeState)
-    sentry.captureMessage('MetaMask - Empty vault found - unable to recover')
+    // sentry.captureMessage('MetaMask - Empty vault found - unable to recover')
   }
 
   // report migration errors to sentry
   migrator.on('error', (err) => {
     // get vault structure without secrets
     const vaultStructure = getObjStructure(versionedData)
-    sentry.captureException(err, {
-      // "extra" key is required by Sentry
-      extra: { vaultStructure },
-    })
+    console.log(vaultStructure)
+    // sentry.captureException(err, {
+    //   // "extra" key is required by Sentry
+    //   extra: { vaultStructure },
+    // })
   })
 
   // migrate data
@@ -202,7 +207,7 @@ async function loadStateFromPersistence () {
 
   // write to disk
   if (localStore.isSupported) {
-    localStore.set(versionedData)
+    await localStore.set(versionedData)
   } else {
     // throw in setTimeout so as to not block boot
     setTimeout(() => {
@@ -249,10 +254,16 @@ function setupController (initState, initLangCode) {
     },
   })
 
-  setupEnsIpfsResolver({
-    getIpfsGateway: controller.preferencesController.getIpfsGateway.bind(controller.preferencesController),
-    provider: controller.provider,
-  })
+  
+  // setupEnsIpfsResolver({
+  //   getIpfsGateway: controller.preferencesController.getIpfsGateway.bind(controller.preferencesController),
+  //   provider: controller.provider,
+  // })
+
+  // submit rpc requests to mesh-metrics
+  // controller.networkController.on('rpc-req', (data) => {
+  //   submitMeshMetricsEntry({ type: 'rpc', data })
+  // })
 
   // report failed transactions to Sentry
   controller.txController.on(`tx:status-update`, (txId, status) => {
@@ -261,7 +272,7 @@ function setupController (initState, initLangCode) {
     }
     const txMeta = controller.txController.txStateManager.getTx(txId)
     try {
-      reportFailedTxToSentry({ sentry, txMeta })
+      // reportFailedTxToSentry({ sentry, txMeta })
     } catch (e) {
       console.error(e)
     }
@@ -297,7 +308,7 @@ function setupController (initState, initLangCode) {
     }
     if (localStore.isSupported) {
       try {
-        await localStore.set(state)
+        localStore.set(state)
       } catch (err) {
         // log error so we dont break the pipeline
         log.error('error setting state in local store:', err)
@@ -308,8 +319,13 @@ function setupController (initState, initLangCode) {
   //
   // connect to other contexts
   //
-  extension.runtime.onConnect.addListener(connectRemote)
-  extension.runtime.onConnectExternal.addListener(connectExternal)
+
+  const serviceWorkerManager = new ServiceWorkerManager()
+
+  serviceWorkerManager.onConnect(window, connectRemote)
+
+  // extension.runtime.onConnect.addListener(connectRemote)
+  // extension.runtime.onConnectExternal.addListener(connectExternal)
 
   const metamaskInternalProcessHash = {
     [ENVIRONMENT_TYPE_POPUP]: true,
@@ -404,12 +420,17 @@ function setupController (initState, initLangCode) {
   // User Interface setup
   //
 
-  updateBadge()
-  controller.txController.on('update:badge', updateBadge)
-  controller.messageManager.on('updateBadge', updateBadge)
-  controller.personalMessageManager.on('updateBadge', updateBadge)
-  controller.typedMessageManager.on('updateBadge', updateBadge)
-  controller.permissionsController.permissions.subscribe(updateBadge)
+  // updateBadge()
+  // controller.txController.on('update:badge', updateBadge)
+  // controller.messageManager.on('updateBadge', updateBadge)
+  // controller.personalMessageManager.on('updateBadge', updateBadge)
+  // controller.typedMessageManager.on('updateBadge', updateBadge)
+  controller.permissionsController.permissions.subscribe(test)
+
+  function test(event){
+    console.log('test',event)
+    console.log('test',controller)
+  }
 
   /**
    * Updates the Web Extension's "badge" number, on the little fox in the toolbar.
@@ -469,8 +490,8 @@ function openPopup () {
 }
 
 // On first install, open a new tab with MetaMask
-extension.runtime.onInstalled.addListener(({ reason }) => {
-  if (reason === 'install' && !(process.env.METAMASK_DEBUG || process.env.IN_TEST)) {
-    platform.openExtensionInBrowser()
-  }
-})
+// extension.runtime.onInstalled.addListener(({ reason }) => {
+//   if (reason === 'install' && !(process.env.METAMASK_DEBUG || process.env.IN_TEST)) {
+//     platform.openExtensionInBrowser()
+//   }
+// })

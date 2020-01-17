@@ -19,7 +19,7 @@ import ExtensionPlatform from './platforms/extension'
 import NotificationManager from './lib/notification-manager'
 
 const notificationManager = new NotificationManager()
-import setupSentry from './lib/setupSentry'
+// import setupSentry from './lib/setupSentry'
 import { EventEmitter } from 'events'
 import Dnode from 'dnode'
 import Eth from 'ethjs'
@@ -29,6 +29,7 @@ import launchMetaMaskUi from '../../ui'
 import StreamProvider from 'web3-stream-provider'
 import { setupMultiplex } from './lib/stream-utils.js'
 import log from 'loglevel'
+import ServiceWorkerManager from './lib/serviceWorker'
 
 start().catch(log.error)
 
@@ -38,8 +39,8 @@ async function start () {
   global.platform = new ExtensionPlatform()
 
   // setup sentry error reporting
-  const release = global.platform.getVersion()
-  setupSentry({ release, getState })
+  // const release = global.platform.getVersion()
+  // setupSentry({ release, getState })
   // provide app state to append to error logs
   function getState () {
     // get app state
@@ -57,7 +58,11 @@ async function start () {
   closePopupIfOpen(windowType)
 
   // setup stream to background
-  const extensionPort = extension.runtime.connect({ name: windowType })
+
+  // BUG: navigator.serviceWorker wiil be null when ctrl + shift + r
+  const serviceWorkerManager = new ServiceWorkerManager()
+  const extensionPort = serviceWorkerManager.connect(windowType)
+  // const extensionPort = extension.runtime.connect({ name: windowType })
   const connectionStream = new PortStream(extensionPort)
 
   const activeTab = await queryCurrentActiveTab(windowType)
@@ -103,13 +108,11 @@ async function queryCurrentActiveTab (windowType) {
       return
     }
 
-    extension.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const [activeTab] = tabs
-      const { title, url } = activeTab
-      const { hostname: origin, protocol } = url ? urlUtil.parse(url) : {}
-      resolve({
-        title, origin, protocol, url,
-      })
+    const title = document.title
+    const url = document.URL
+    const { hostname: origin, protocol } = url ? urlUtil.parse(url) : {}
+    resolve({
+      title, origin, protocol, url,
     })
   })
 }

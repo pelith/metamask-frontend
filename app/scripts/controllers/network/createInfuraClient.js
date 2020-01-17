@@ -11,8 +11,11 @@ import BlockTracker from 'eth-block-tracker'
 
 export default createInfuraClient
 
+<<<<<<< HEAD
 function createInfuraClient ({ network }) {
-  const infuraMiddleware = createInfuraMiddleware({ network, maxAttempts: 5, source: 'metamask' })
+  // temporary remove source, cause it will cause prefligt error
+  const infuraMiddleware = createInfuraMiddleware({ network, maxAttempts: 5 })
+
   const infuraProvider = providerFromMiddleware(infuraMiddleware)
   const blockTracker = new BlockTracker({ provider: infuraProvider })
 

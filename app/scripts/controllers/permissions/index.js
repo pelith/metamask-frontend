@@ -89,7 +89,6 @@ export class PermissionsController {
    */
   getAccounts (origin) {
     return new Promise((resolve, _) => {
-
       const req = { method: 'eth_accounts' }
       const res = {}
       this.permissions.providerMiddlewareFunction(

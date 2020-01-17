@@ -1,5 +1,6 @@
 import serialize from 'serialize-javascript'
 import log from 'loglevel'
+import { openDB, deleteDB, wrap, unwrap } from 'idb'
 
 function deserialize(serializedJavascript){
   return eval('(' + serializedJavascript + ')');
@@ -13,44 +14,46 @@ export default class BrowserStore {
    * @constructor
    */
   constructor () {
-    this.isSupported = !!(window.localStorage)
+    this.isSupported = !!(window.indexedDB)
     if (!this.isSupported) {
       log.error('Storage local API not available.')
     }
+  }
+
+  async init() {
+    this.db = await openDB('metamask', 1, {
+      async upgrade(db, oldVersion) {
+        db.createObjectStore('background')
+      },
+    })
   }
 
   /**
    * Returns all of the keys currently saved
    * @returns {Promise<*>}
    */
-  get () {
+  async get () {
     if (!this.isSupported) {
       return undefined
     }
-    const result = window.localStorage.getItem('state') || {}
-    // extension.storage.local always returns an obj
-    // if the object is empty, treat it as undefined
-    if (isEmpty(result)) {
-      return undefined
-    } else {
-      return deserialize(result)
+
+    if (!this.db) {
+      await this.init()
     }
+
+    const result = await this.db.get('background', 'state') 
+    return deserialize(result)
   }
 
   /**
    * Sets the key in local state
    * @param {object} state - The state to set
    */
-  set (state) {
-    window.localStorage.setItem('state', serialize(state))
-  }
-}
+  async set (state) {
+    if (!this.db) {
+      await this.init()
+    }
 
-/**
- * Returns whether or not the given object contains no keys
- * @param {Object} obj - The object to check
- * @returns {boolean}
- */
-function isEmpty (obj) {
-  return Object.keys(obj).length === 0
+    const result = await this.db.put('background', serialize(state), 'state')
+  }
 }
