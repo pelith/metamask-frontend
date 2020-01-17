@@ -32,7 +32,7 @@ export default class BrowserStore {
    * Returns all of the keys currently saved
    * @returns {Promise<*>}
    */
-  get () {
+  async get () {
     if (!this.isSupported) {
       return undefined
     }

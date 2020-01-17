@@ -57,7 +57,6 @@ async function start () {
  *
  */
 async function setupStreams () {
-
   // the transport-specific streams for communication between inpage and background
   const pageStream = new LocalMessageDuplexStream({
     name: 'contentscript',
