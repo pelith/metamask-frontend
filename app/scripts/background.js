@@ -257,15 +257,10 @@ function setupController (initState, initLangCode) {
     },
   })
 
-  
   // setupEnsIpfsResolver({
+  //   getCurrentNetwork: controller.getCurrentNetwork,
   //   getIpfsGateway: controller.preferencesController.getIpfsGateway.bind(controller.preferencesController),
   //   provider: controller.provider,
-  // })
-
-  // submit rpc requests to mesh-metrics
-  // controller.networkController.on('rpc-req', (data) => {
-  //   submitMeshMetricsEntry({ type: 'rpc', data })
   // })
 
   // report failed transactions to Sentry
