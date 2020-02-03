@@ -106,6 +106,7 @@ export default class PermissionConnect extends Component {
       setTimeout(async () => {
         const currentTab = await global.platform.currentTab()
         try {
+          console.log('redirectFlow', requestAccountTabs[originName])
           if (currentTab.active) {
             await global.platform.switchToTab(requestAccountTabs[originName])
           }

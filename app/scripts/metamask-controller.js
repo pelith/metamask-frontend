@@ -1308,6 +1308,7 @@ export default class MetamaskController extends EventEmitter {
       return
     }
 
+    console.log('setupUntrustedCommunication', connectionStream)
     // setup multiplexing
     const mux = setupMultiplex(connectionStream)
 

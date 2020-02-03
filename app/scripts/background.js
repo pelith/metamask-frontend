@@ -20,7 +20,7 @@ import ReadOnlyNetworkStore from './lib/network-store'
 import LocalStore from './lib/local-store'
 import storeTransform from 'obs-store/lib/transform'
 import asStream from 'obs-store/lib/asStream'
-import ExtensionPlatform from './platforms/extension'
+import platform from './platforms'
 import Migrator from './lib/migrator'
 import migrations from './migrations'
 import PortStream from 'extension-port-stream'
@@ -35,6 +35,7 @@ import getFirstPreferredLangCode from './lib/get-first-preferred-lang-code'
 import getObjStructure from './lib/getObjStructure'
 // import setupEnsIpfsResolver from './lib/ens-ipfs/setup'
 import ServiceWorkerManager from './lib/serviceWorker'
+import MessageChannelPortDuplexStream from 'sw-stream/lib/message-channel-port-stream' 
 
 import {
   ENVIRONMENT_TYPE_POPUP,
@@ -47,7 +48,6 @@ const firstTimeState = Object.assign({}, rawFirstTimeState, global.METAMASK_TEST
 
 log.setDefaultLevel(process.env.METAMASK_DEBUG ? 'debug' : 'warn')
 
-const platform = new ExtensionPlatform()
 const notificationManager = new NotificationManager()
 global.METAMASK_NOTIFIER = notificationManager
 
@@ -319,13 +319,8 @@ function setupController (initState, initLangCode) {
   //
   // connect to other contexts
   //
-
-  const serviceWorkerManager = new ServiceWorkerManager()
-
-  serviceWorkerManager.onConnect(window, connectRemote)
-
-  // extension.runtime.onConnect.addListener(connectRemote)
-  // extension.runtime.onConnectExternal.addListener(connectExternal)
+  platform.onConnect.addListener(connectRemote)
+  platform.onConnectExternal.addListener(connectExternal)
 
   const metamaskInternalProcessHash = {
     [ENVIRONMENT_TYPE_POPUP]: true,
@@ -353,16 +348,15 @@ function setupController (initState, initLangCode) {
    * This method identifies trusted (MetaMask) interfaces, and connects them differently from untrusted (web pages).
    * @param {Port} remotePort - The port provided by a new context.
    */
-  function connectRemote (remotePort) {
+  function connectRemote (portStream, remotePort) {
     const processName = remotePort.name
     const isMetaMaskInternalProcess = metamaskInternalProcessHash[processName]
 
-    if (metamaskBlacklistedPorts.includes(remotePort.name)) {
+    if (metamaskBlacklistedPorts.includes(processName)) {
       return false
     }
 
     if (isMetaMaskInternalProcess) {
-      const portStream = new PortStream(remotePort)
       // communication with popup
       controller.isClientOpen = true
       controller.setupTrustedCommunication(portStream, remotePort.sender)
@@ -401,18 +395,18 @@ function setupController (initState, initLangCode) {
         const origin = url.hostname
 
         remotePort.onMessage.addListener(msg => {
+          console.log('background', msg)
           if (msg.data && msg.data.method === 'eth_requestAccounts') {
             requestAccountTabIds[origin] = tabId
           }
         })
       }
-      connectExternal(remotePort)
+      connectExternal(portStream, remotePort)
     }
   }
 
   // communication with page or other extension
-  function connectExternal (remotePort) {
-    const portStream = new PortStream(remotePort)
+  function connectExternal (portStream, remotePort) {
     controller.setupUntrustedCommunication(portStream, remotePort.sender)
   }
 
@@ -425,12 +419,7 @@ function setupController (initState, initLangCode) {
   // controller.messageManager.on('updateBadge', updateBadge)
   // controller.personalMessageManager.on('updateBadge', updateBadge)
   // controller.typedMessageManager.on('updateBadge', updateBadge)
-  controller.permissionsController.permissions.subscribe(test)
-
-  function test(event){
-    console.log('test',event)
-    console.log('test',controller)
-  }
+  // controller.permissionsController.permissions.subscribe(test)
 
   /**
    * Updates the Web Extension's "badge" number, on the little fox in the toolbar.
@@ -462,13 +451,18 @@ function setupController (initState, initLangCode) {
  * Opens the browser popup for user confirmation
  */
 function triggerUi () {
-  extension.tabs.query({ active: true }, tabs => {
-    const currentlyActiveMetamaskTab = Boolean(tabs.find(tab => openMetamaskTabsIDs[tab.id]))
-    if (!popupIsOpen && !currentlyActiveMetamaskTab && !notificationIsOpen) {
-      notificationManager.showPopup()
-      notificationIsOpen = true
-    }
-  })
+  if (self.serviceWorker) {
+    platform.showPopup()  
+  }
+  else {
+    extension.tabs.query({ active: true }, tabs => {
+      const currentlyActiveMetamaskTab = Boolean(tabs.find(tab => openMetamaskTabsIDs[tab.id]))
+      if (!popupIsOpen && !currentlyActiveMetamaskTab && !notificationIsOpen) {
+        notificationManager.showPopup()
+        notificationIsOpen = true
+      }
+    })
+  }
 }
 
 /**

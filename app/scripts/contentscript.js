@@ -2,9 +2,7 @@ import pump from 'pump'
 import querystring from 'querystring'
 import LocalMessageDuplexStream from 'post-message-stream'
 import ObjectMultiplex from 'obj-multiplex'
-import extension from 'extensionizer'
-import PortStream from 'extension-port-stream'
-import ServiceWorkerManager from './lib/serviceWorker'
+import platform from './platforms'
 
 // These require calls need to use require to be statically recognized by browserify
 const fs = require('fs')
@@ -59,12 +57,6 @@ async function start () {
  *
  */
 async function setupStreams () {
-  if (!('serviceWorker' in navigator)) {
-    console.log('getout mdfk')
-    return
-  }
-
-  await navigator.serviceWorker.ready
 
   // the transport-specific streams for communication between inpage and background
   const pageStream = new LocalMessageDuplexStream({
@@ -72,18 +64,14 @@ async function setupStreams () {
     target: 'inpage',
   })
 
-  // BUG: navigator.serviceWorker wiil be null when ctrl + shift + r
-  const serviceWorkerManager = new ServiceWorkerManager()
-  const extensionPort = serviceWorkerManager.connect('contentscript')
-  // const extensionPort = extension.runtime.connect({ name: 'contentscript' })
-  const extensionStream = new PortStream(extensionPort)
+  const platformStream = await platform.connect({ name: 'contentscript' })
 
   // create and connect channel muxers
   // so we can handle the channels individually
   const pageMux = new ObjectMultiplex()
   pageMux.setMaxListeners(25)
-  const extensionMux = new ObjectMultiplex()
-  extensionMux.setMaxListeners(25)
+  const platformMux = new ObjectMultiplex()
+  platformMux.setMaxListeners(25)
 
   pump(
     pageMux,
@@ -92,18 +80,18 @@ async function setupStreams () {
     (err) => logStreamDisconnectWarning('MetaMask Inpage Multiplex', err)
   )
   pump(
-    extensionMux,
-    extensionStream,
-    extensionMux,
+    platformMux,
+    platformStream,
+    platformMux,
     (err) => logStreamDisconnectWarning('MetaMask Background Multiplex', err)
   )
 
   // forward communication across inpage-background for these channels only
-  forwardTrafficBetweenMuxers('provider', pageMux, extensionMux)
-  forwardTrafficBetweenMuxers('publicConfig', pageMux, extensionMux)
+  forwardTrafficBetweenMuxers('provider', pageMux, platformMux)
+  forwardTrafficBetweenMuxers('publicConfig', pageMux, platformMux)
 
   // connect "phishing" channel to warning system
-  const phishingStream = extensionMux.createStream('phishing')
+  const phishingStream = platformMux.createStream('phishing')
   phishingStream.once('data', redirectToPhishingWarning)
 }
 

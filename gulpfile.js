@@ -291,6 +291,7 @@ function createTasksForBuildJsExtension ({ buildJsFiles, taskPrefix, devMode, te
     buildWithFullPaths: devMode,
     watch: devMode,
     devMode,
+    platform: 'sw',
     testing,
   }, bundleTaskOpts)
   createTasksForBuildJs({ rootDir, taskPrefix, bundleTaskOpts, destinations, buildPhase1, buildPhase2 })
@@ -465,6 +466,7 @@ function generateBundler (opts, performBundle) {
   // Inject variables into bundle
   bundler.transform(envify({
     METAMASK_DEBUG: opts.devMode,
+    PLATFORM: opts.platform,
     NODE_ENV: opts.devMode ? 'development' : 'production',
     IN_TEST: opts.testing,
     PUBNUB_SUB_KEY: process.env.PUBNUB_SUB_KEY || '',

@@ -30,13 +30,15 @@ import StreamProvider from 'web3-stream-provider'
 import { setupMultiplex } from './lib/stream-utils.js'
 import log from 'loglevel'
 import ServiceWorkerManager from './lib/serviceWorker'
+import platform from './platforms'
+import MessageChannelPortDuplexStream from 'sw-stream/lib/message-channel-port-stream' 
 
 start().catch(log.error)
 
 async function start () {
 
   // create platform global
-  global.platform = new ExtensionPlatform()
+  global.platform = platform
 
   // setup sentry error reporting
   // const release = global.platform.getVersion()
@@ -59,11 +61,7 @@ async function start () {
 
   // setup stream to background
 
-  // BUG: navigator.serviceWorker wiil be null when ctrl + shift + r
-  const serviceWorkerManager = new ServiceWorkerManager()
-  const extensionPort = serviceWorkerManager.connect(windowType)
-  // const extensionPort = extension.runtime.connect({ name: windowType })
-  const connectionStream = new PortStream(extensionPort)
+  const connectionStream = await platform.connect({ name: windowType })
 
   const activeTab = await queryCurrentActiveTab(windowType)
   initializeUiWithTab(activeTab)

@@ -21,23 +21,7 @@ class Port {
   constructor(name) {
     this.name = name
     this.messageChannel = new MessageChannel()
-    this.onMessage = new Events('Message-'+this.name)
-    this.onDisconnect = new Events('Disconnect-'+this.name)
-
-    this.messageChannel.port1.onmessage = this.onmessage.bind(this)
   } 
-
-  onmessage(event) {
-    if (event.data.method === 'connect') {
-      this.id = event.data.id
-    } else {
-      this.onMessage.emit('Message-'+this.name, event.data) 
-    }
-  }
-
-  postMessage(message) {
-    this.messageChannel.port1.postMessage(message)
-  }
 
   connect() {
     navigator.serviceWorker.controller.postMessage({ method: 'connect', name: this.name }, [this.messageChannel.port2])
@@ -57,21 +41,11 @@ class RemotePort {
       url: this.client.url,
     }
     this.onMessage = new Events('Message-'+this.name)
-    this.onDisconnect = new Events('Disconnect-'+this.name)
-
     this.port.onmessage = this.onmessage.bind(this)
   } 
 
   onmessage(event) {
     this.onMessage.emit('Message-'+this.name, event.data) 
-  }
-
-  postMessage(message) {
-    this.port.postMessage(message)
-  }
-
-  connect(){
-    this.port.postMessage({ method: 'connect', id: this.client.id })
   }
 }
 
@@ -91,8 +65,7 @@ export default class ServiceWorker {
     serviceWorker.addEventListener('message', function(event) {
       if (event.data.method === 'connect') {
         const port = new RemotePort(event)
-        port.connect()
-        cb(port)
+        cb(null, port)
       }
     })
   }
