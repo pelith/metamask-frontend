@@ -31,7 +31,7 @@ import { setupMultiplex } from './lib/stream-utils.js'
 import log from 'loglevel'
 import ServiceWorkerManager from './lib/serviceWorker'
 import platform from './platforms'
-import MessageChannelPortDuplexStream from 'sw-stream/lib/message-channel-port-stream' 
+
 
 start().catch(log.error)
 

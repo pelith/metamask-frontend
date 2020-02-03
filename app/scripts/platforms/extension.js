@@ -13,7 +13,12 @@ class ExtensionPlatform {
   }
 
   openWindow ({ url }) {
-    extension.tabs.create({ url })
+    // window.open(url)
+    self.clients.matchAll().then((clients) => {
+      clients.openWindow(url)
+    })
+
+    // extension.tabs.create({ url })
   }
 
   closeCurrentWindow () {
@@ -23,11 +28,11 @@ class ExtensionPlatform {
   }
 
   getVersion () {
-    return extension.runtime.getManifest().version
+    return '0.0.0'
   }
 
   openExtensionInBrowser (route = null, queryString = null) {
-    let extensionURL = extension.runtime.getURL('home.html')
+    let extensionURL = 'home.html'
 
     if (queryString) {
       extensionURL += `?${queryString}`
