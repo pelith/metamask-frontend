@@ -35,6 +35,7 @@ import getFirstPreferredLangCode from './lib/get-first-preferred-lang-code'
 import getObjStructure from './lib/getObjStructure'
 // import setupEnsIpfsResolver from './lib/ens-ipfs/setup'
 import ServiceWorkerManager from './lib/serviceWorker'
+import MessageChannelPortDuplexStream from 'sw-stream/lib/message-channel-port-stream' 
 
 import {
   ENVIRONMENT_TYPE_POPUP,

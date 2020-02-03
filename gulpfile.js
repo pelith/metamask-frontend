@@ -487,6 +487,7 @@ function generateBundler (opts, performBundle) {
     METAMASK_DEBUG: opts.devMode,
     PLATFORM: opts.platform,
     METAMASK_ENVIRONMENT: environment,
+    PLATFORM: opts.platform,
     NODE_ENV: opts.devMode ? 'development' : 'production',
     IN_TEST: opts.testing,
     PUBNUB_SUB_KEY: process.env.PUBNUB_SUB_KEY || '',
