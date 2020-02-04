@@ -158,7 +158,8 @@ class SwPlatform {
   }
 
   closeTab (tabId) {
-    window.close()
+    console.log('sw closeTab!!!!', tabId)
+    this._reload()
   }
 
   connect (opts) {
@@ -192,7 +193,12 @@ class SwPlatform {
   }
 
   _openWindow(opts) {
-    window.open(opts.url)
+    if (window.top == window.self) {
+      window.open(opts.url)
+    } 
+    else {
+      window.postMessage({ 'method': 'openWindow', opts })
+    }
   }
 
 }
