@@ -65,7 +65,17 @@ class SwPlatform {
     })
 
     // only work in background.js serviceWorker 
-    if (self.serviceWorker) {
+    if (self.clients && location.href.indexOf('background.js') !== -1) {
+      self.addEventListener('install', event => {
+        console.log('install')
+        self.skipWaiting()
+      })
+
+      self.addEventListener('activate', event => {
+        console.log('activate')
+        event.waitUntil(clients.claim())
+      })
+
       this.onConnect = new Events('Connect')
       this.onConnectExternal = new Events('ConnectExternal')
 
@@ -101,14 +111,17 @@ class SwPlatform {
    * @param {{url: string}} opts - The window options
    */
   async openWindow (opts) {
-    // find openwindow or popup window
-    let client = await this.findFirstWindow(ENVIRONMENT_TYPE_FULLSCREEN)
-    if (client) {
-      client.postMessage({ 'method': 'reloadWindow', opts })
-    } else {
-      client  = await this.findFirstWindow(ENVIRONMENT_TYPE_BACKGROUND)
-      client.postMessage({ 'method': 'openWindow', opts })
-    }
+    // close all window if exists
+    self.clients.matchAll().then((clientList) => {
+      for (const client of clientList) {
+        if (client.type === 'window' && getEnvironmentType(client.url) !== ENVIRONMENT_TYPE_BACKGROUND) {
+          client.postMessage({ 'method': 'closeWindow' })
+        }
+      }   
+    })
+
+    const client = await this.findFirstWindow(ENVIRONMENT_TYPE_BACKGROUND)
+    client.postMessage({ 'method': 'openWindow', opts })
   }
 
   closeCurrentWindow () {
@@ -124,13 +137,7 @@ class SwPlatform {
   }
 
   async showPopup () {
-    console.log('showPopup')
-    const client = await this.findFirstWindow(ENVIRONMENT_TYPE_FULLSCREEN)
-    if (client) {
-      this.openExtensionInBrowser()
-    } else {
-      this.openWindow({url: 'notification.html'})
-    }
+    this.openWindow({url: 'notification.html'})
   }
 
   openExtensionInBrowser (route = null, queryString = null) {
@@ -144,10 +151,8 @@ class SwPlatform {
     if (route) {
       platformURL += `#${route}`
     }
+    
     this.openWindow({ url: platformURL })
-    // if (getEnvironmentType() !== ENVIRONMENT_TYPE_BACKGROUND) {
-    //   window.close()
-    // }
   }
 
   currentTab () {
@@ -164,25 +169,37 @@ class SwPlatform {
 
   connect (opts) {
     return new Promise((resolve, reject) => {
-      this.swController.once('ready', () => {
-        const swStream = createSwStream({
-          serviceWorker: this.swController.getWorker(),
-          context: {
-            name: opts.name,
-          },
-        })
-        
-        this.swController.serviceWorkerApi.addEventListener('message', event => {
-          if (event.data.method === 'openWindow') {
-            this._openWindow(event.data.opts)
-          } 
-          else if (event.data.method === 'reloadWindow') {
-            this._reload()
-          } 
-          console.log(event)
-        })
+      this.swController.once('ready', (activeServiceWorker) => {
+        (new Promise((resolve, reject) => {
+          console.log(activeServiceWorker)
+          if (activeServiceWorker.state === 'activated') {
+            resolve()
+          } else {
+            // trigger when install service worker, and it's claims
+            navigator.serviceWorker.addEventListener('controllerchange', (event) => {
+              resolve()
+            })
+          }
+        })).then(() => {
+          console.log('done')
+          const swStream = createSwStream({
+            serviceWorker: this.swController.getWorker(),
+            context: {
+              name: opts.name,
+            },
+          })
+          
+          this.swController.serviceWorkerApi.addEventListener('message', event => {
+            if (event.data.method === 'openWindow') {
+              this._openWindow(event.data.opts)
+            }
+            else if (event.data.method === 'closeWindow') {
+              this._closeWindow()
+            }
+          })
 
-        resolve(swStream)
+          resolve(swStream)
+        })
       })
       this.swController.startWorker()
     })
@@ -192,11 +209,16 @@ class SwPlatform {
     location.reload()
   }
 
+  _closeWindow() {
+    window.close()
+  }
+
   _openWindow(opts) {
     if (window.top == window.self) {
       window.open(opts.url)
     } 
     else {
+      // when it's in iframe
       window.postMessage({ 'method': 'openWindow', opts })
     }
   }

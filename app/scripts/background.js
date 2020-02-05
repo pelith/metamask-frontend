@@ -30,10 +30,9 @@ import MetamaskController from './metamask-controller'
 import rawFirstTimeState from './first-time-state'
 import setupSentry from './lib/setupSentry'
 import reportFailedTxToSentry from './lib/reportFailedTxToSentry'
-// import setupMetamaskMeshMetrics from './lib/setupMetamaskMeshMetrics'
 import getFirstPreferredLangCode from './lib/get-first-preferred-lang-code'
 import getObjStructure from './lib/getObjStructure'
-// import setupEnsIpfsResolver from './lib/ens-ipfs/setup'
+import setupEnsIpfsResolver from './lib/ens-ipfs/setup'
 
 import {
   ENVIRONMENT_TYPE_POPUP,
@@ -71,9 +70,6 @@ if (inTest || process.env.METAMASK_DEBUG) {
 
 // initialization flow
 initialize().catch(log.error)
-
-// setup metamask mesh testing container
-// const { submitMeshMetricsEntry } = setupMetamaskMeshMetrics()
 
 /**
  * An object representing a transaction, in whatever state it is in.
@@ -194,7 +190,6 @@ async function loadStateFromPersistence () {
   migrator.on('error', (err) => {
     // get vault structure without secrets
     const vaultStructure = getObjStructure(versionedData)
-    console.log(vaultStructure)
     // sentry.captureException(err, {
     //   // "extra" key is required by Sentry
     //   extra: { vaultStructure },
