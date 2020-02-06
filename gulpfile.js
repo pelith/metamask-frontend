@@ -252,12 +252,12 @@ const buildJsFiles = [
 ]
 
 // bundle tasks
-// createTasksForBuildJsDeps({ filename: 'bg-libs', key: 'background' })
-// createTasksForBuildJsDeps({ filename: 'ui-libs', key: 'ui' })
+createTasksForBuildJsDeps({ filename: 'bg-libs', key: 'background' })
+createTasksForBuildJsDeps({ filename: 'ui-libs', key: 'ui' })
 createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:extension:js', devMode: true })
-// createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:test-extension:js', devMode: true, testing: 'true' })
-// createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:extension:js' })
-// createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:test:extension:js', testing: 'true' })
+createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'dev:test-extension:js', devMode: true, testing: 'true' })
+createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:extension:js' })
+createTasksForBuildJsExtension({ buildJsFiles, taskPrefix: 'build:test:extension:js', testing: 'true' })
 
 function createTasksForBuildJsDeps ({ key, filename }) {
   const destinations = browserPlatforms.map(platform => `./dist/${platform}`)
@@ -359,39 +359,38 @@ gulp.task('dev:extension',
   )
 )
 
-// gulp.task('build',
-//   gulp.series(
-//     'clean',
-//     'build:scss',
-//     gulpParallel(
-//       'build:extension:js:deps:background',
-//       'build:extension:js:deps:ui',
-//       'build:extension:js',
-//       'copy'
-//     ),
-//     'optimize:images'
-//   )
-// )
+gulp.task('build',
+  gulp.series(
+    'clean',
+    'build:scss',
+    gulpParallel(
+      'build:extension:js:deps:background',
+      'build:extension:js:deps:ui',
+      'build:extension:js',
+      'copy'
+    ),
+    'optimize:images'
+  )
+)
 
-// gulp.task('build:test',
-//   gulp.series(
-//     'clean',
-//     'build:scss',
-//     gulpParallel(
-//       'build:extension:js:deps:background',
-//       'build:extension:js:deps:ui',
-//       'build:test:extension:js',
-//       'copy'
-//     )
-//   )
-// )
+gulp.task('build:test',
+  gulp.series(
+    'clean',
+    'build:scss',
+    gulpParallel(
+      'build:extension:js:deps:background',
+      'build:extension:js:deps:ui',
+      'build:test:extension:js',
+      'copy'
+    )
+  )
+)
 
-// gulp.task('dist',
-//   gulp.series(
-//     'build',
-//     'zip'
-//   )
-// )
+gulp.task('dist',
+  gulp.series(
+    'build'
+  )
+)
 
 // task generators
 

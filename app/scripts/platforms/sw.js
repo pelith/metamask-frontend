@@ -85,6 +85,10 @@ class SwPlatform {
     }
   }
 
+  triggerUi() {
+    this.showPopup()
+  }
+
   /**
    * Reloads the platform
    */
@@ -172,7 +176,6 @@ class SwPlatform {
           if (activeServiceWorker.state === 'activated') {
             resolve()
           } else {
-
             // trigger when install service worker, and it's claims
             navigator.serviceWorker.addEventListener('controllerchange', (event) => {
               resolve()

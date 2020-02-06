@@ -443,18 +443,7 @@ function setupController (initState, initLangCode) {
  * Opens the browser popup for user confirmation
  */
 function triggerUi () {
-  if (self.serviceWorker) {
-    platform.showPopup()  
-  }
-  else {
-    extension.tabs.query({ active: true }, tabs => {
-      const currentlyActiveMetamaskTab = Boolean(tabs.find(tab => openMetamaskTabsIDs[tab.id]))
-      if (!popupIsOpen && !currentlyActiveMetamaskTab && !notificationIsOpen) {
-        notificationManager.showPopup()
-        notificationIsOpen = true
-      }
-    })
-  }
+  platform.triggerUi()
 }
 
 /**
