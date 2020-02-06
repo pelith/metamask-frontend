@@ -67,12 +67,10 @@ class SwPlatform {
     // only work in background.js serviceWorker 
     if (self.clients && location.href.indexOf('background.js') !== -1) {
       self.addEventListener('install', event => {
-        console.log('install')
         self.skipWaiting()
       })
 
       self.addEventListener('activate', event => {
-        console.log('activate')
         event.waitUntil(clients.claim())
       })
 
@@ -171,17 +169,16 @@ class SwPlatform {
     return new Promise((resolve, reject) => {
       this.swController.once('ready', (activeServiceWorker) => {
         (new Promise((resolve, reject) => {
-          console.log(activeServiceWorker)
           if (activeServiceWorker.state === 'activated') {
             resolve()
           } else {
+
             // trigger when install service worker, and it's claims
             navigator.serviceWorker.addEventListener('controllerchange', (event) => {
               resolve()
             })
           }
         })).then(() => {
-          console.log('done')
           const swStream = createSwStream({
             serviceWorker: this.swController.getWorker(),
             context: {
