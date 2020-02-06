@@ -13,14 +13,8 @@
       </ol>
     </div>
     <script src="./contentscript.js" type="text/javascript" charset="utf-8"></script>
-    <script type="module" src="http://localhost:5678/url-wallet.mjs"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Gilg4mesh/urlwallet-sdk/dist/url-wallet.min.js"></script>
     <script>
-    window.addEventListener('message', (e)=>{
-      if (event.data.method === 'openWindow') {
-        window.open(event.data.opts.url)
-      } 
-    })
-    
     const dispStatus = document.getElementById('status')
     const uiMap = new Map()
 
@@ -37,6 +31,22 @@
       }
     }
 
+    const urlwallet = new UrlWallet()
+    window.addEventListener('message', (event) => {
+      if (event.data.method === 'handshake') {
+        urlwallet.postMessageHandler(event)
+      }
+      else if (event.data.method === 'handshakeDone') {
+        main(urlwallet.bridge)
+      }
+      else if (event.data.method === 'openWindow') {
+        const newWindow = window.open(event.data.opts.url)
+        if (!newWindow || newWindow.closed || newWindow.closed === undefined) {
+          console.error('pop-up window is blocked (message from iframe)')
+          urlwallet.windowBlocked(event.data.opts.url)
+        }
+      }
+    })
     </script>
   </body>
 </html>
