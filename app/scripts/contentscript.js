@@ -86,7 +86,7 @@ async function setupStreams () {
   )
 
   // forward communication across inpage-background for these channels only
-  forwardTrafficBetweenMuxers('provider', pageMux, platformMux)
+  forwardTrafficBetweenMuxers('url-provider', pageMux, platformMux)
   forwardTrafficBetweenMuxers('publicConfig', pageMux, platformMux)
 
   // connect "phishing" channel to warning system
