@@ -219,7 +219,7 @@ class SwPlatform {
     } 
     else {
       // when it's in iframe
-      window.postMessage({ 'method': 'openWindow', opts })
+      window.postMessage({ 'method': 'openWindow', opts }, location.origin)
     }
   }
 
