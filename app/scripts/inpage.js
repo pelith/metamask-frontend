@@ -34,7 +34,7 @@ cleanContextForImports()
 
 import log from 'loglevel'
 import LocalMessageDuplexStream from 'post-message-stream'
-import MetamaskInpageProvider from 'metamask-inpage-provider'
+import MetamaskInpageProvider from './platforms/metamask-inpage-provider'
 
 // TODO:deprecate:2020-01-13
 import 'web3/dist/web3.min.js'
@@ -74,7 +74,7 @@ const proxiedInpageProvider = new Proxy(inpageProvider, {
 //
 
 // setup web3
-
+/*
 if (typeof window.web3 !== 'undefined') {
   throw new Error(`MetaMask detected another web3.
      MetaMask will not work reliably with another web3 extension.
@@ -82,7 +82,7 @@ if (typeof window.web3 !== 'undefined') {
      or MetaMask and another web3 extension. Please remove one
      and try again.`)
 }
-
+*/
 const web3 = new Web3(proxiedInpageProvider)
 web3.setProvider = function () {
   log.debug('MetaMask - overrode web3.setProvider')
