@@ -13,7 +13,7 @@
       </ol>
     </div>
     <script src="./contentscript.js" type="text/javascript" charset="utf-8"></script>
-    <script src="https://cdn.jsdelivr.net/gh/Gilg4mesh/urlwallet-sdk@0.1.11/dist/url-wallet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Gilg4mesh/urlwallet-sdk@0.1.12/dist/url-wallet.min.js"></script>
     <script>
     const dispStatus = document.getElementById('status')
     const uiMap = new Map()
@@ -41,8 +41,11 @@
       }
       else if (event.data.method === 'openWindow') {
         const url = event.data.opts.url
+        // trying to pop-up from iframe and try again from Dapp if failed
+        urlwallet.openWindow(url)
+
         // pop-up from dapp
-        urlwallet.openWindowFromDapp(url)
+        // urlwallet.openWindowFromDapp(url)
 
         // pop-up from iframe
         /*
